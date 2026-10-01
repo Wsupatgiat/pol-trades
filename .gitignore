@@ -1,0 +1,60 @@
+.git
+.env
+.DS_Store
+airflow_settings.yaml
+__pycache__/
+astro
+.venv
+.astro/standalone/
+.astro/worktrees/
+airflow-webserver.pid
+webserver_config.py
+airflow.cfg
+airflow.db
+.astro/*.local.yml
+.astro/*.local.yaml
+
+**/.astro/dbt_metadata.json
+**/.astro/manifest.slim.json
+
+# Personal testing, not part of the pipeline
+data_profiling/
+
+# Python
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+*.egg-info/
+
+# Airflow
+logs/
+
+# dbt
+profiles.yml
+.user.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+
+# Secrets
+.env.*
+!.env.example
+*.pem
+*.p8
+*.key
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+
+# Claude Code
+CLAUDE.md
+CLAUDE.local.md
+.claude/
