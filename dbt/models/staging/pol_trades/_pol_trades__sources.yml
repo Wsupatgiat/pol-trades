@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: pol_trades
+    database: raw
+    schema: testing
+    tables:
+      - name: filers

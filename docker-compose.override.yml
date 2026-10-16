@@ -1,0 +1,18 @@
+version: "3.1"
+services:
+  scheduler:
+    volumes:
+      - ./connectors:/usr/local/airflow/connectors:rw
+      - ./dbt:/usr/local/airflow/dbt:rw
+  dag-processor:
+    volumes:
+      - ./connectors:/usr/local/airflow/connectors:rw
+      - ./dbt:/usr/local/airflow/dbt:rw
+  api-server:
+    volumes:
+      - ./connectors:/usr/local/airflow/connectors:rw
+      - ./dbt:/usr/local/airflow/dbt:rw
+  triggerer:
+    volumes:
+      - ./connectors:/usr/local/airflow/connectors:rw
+      - ./dbt:/usr/local/airflow/dbt:rw

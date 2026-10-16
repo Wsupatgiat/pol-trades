@@ -1,8 +1,65 @@
-astro
+# Docker matches patterns from the project root only, and nested ignore files
+# (e.g. dbt/.gitignore) are not read. Use **/ for anything that can appear at any depth.
+
+# VCS / local env
 .git
-.env
-airflow_settings.yaml
-logs/
+**/.gitignore
 .venv
+venv/
+.env
+.env.*
+!.env.example
+
+# Astro local-only
+astro
+airflow_settings.yaml
 airflow.db
 airflow.cfg
+webserver_config.py
+airflow-webserver.pid
+.astro/standalone/
+.astro/worktrees/
+.astro/*.local.yml
+.astro/*.local.yaml
+
+# Personal testing, not part of the pipeline
+data_profiling/
+
+# Not needed at runtime
+infra/
+bootstrap-snowflake/
+README.md
+
+# Python / tool caches
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+**/__marimo__
+
+# Logs and dbt build output
+**/logs
+dbt/target
+dbt/dbt_packages
+dbt/dbt_internal_packages
+**/profiles.yml
+**/.user.yml
+
+# Secrets
+**/*.pem
+**/*.p8
+**/*.key
+**/*.tfvars
+**/*.tfstate
+**/*.tfstate.*
+
+# Editor / OS / Claude Code
+**/.DS_Store
+**/Thumbs.db
+**/.vscode
+**/.idea
+.claude/
+CLAUDE.md
+CLAUDE.local.md
