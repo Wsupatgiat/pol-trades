@@ -96,3 +96,7 @@ resource "aws_instance" "airflow" {
 		Name = "airflow"
 	}
 }
+
+output "airflow_instance_id" {
+	value = aws_instance.airflow.id
+}

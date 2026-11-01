@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Docker and the Astro CLI (pinned to the version used locally)
 apt-get update
-apt-get install -y docker.io docker-compose-v2 git
+apt-get install -y docker.io docker-compose-v2 docker-buildx git
 usermod -aG docker ubuntu
 curl -sSL install.astronomer.io | ASTRO_INSTALL_DIR=/usr/local/bin bash -s -- v1.45.0
 
@@ -17,7 +17,7 @@ AIRFLOW__SECRETS__BACKEND_KWARGS={"connections_prefix": "/pol-trades/airflow/con
 AWS_DEFAULT_REGION=us-east-1
 EOF
 
-# systemd service so Airflow starts on every boot after the first manual start
+# systemd service so Airflow starts now and on every boot
 cat > /etc/systemd/system/airflow.service <<'EOF'
 [Unit]
 Description=Airflow (astro dev)
@@ -36,4 +36,4 @@ ExecStop=/usr/local/bin/astro dev stop
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl enable airflow.service
+systemctl enable --now --no-block airflow.service
