@@ -80,6 +80,8 @@ resource "aws_instance" "airflow" {
 	ami                  = data.aws_ami.ubuntu.id
 	instance_type        = "t3.medium"
 	iam_instance_profile = aws_iam_instance_profile.airflow.name
+	user_data                   = file("${path.module}/user_data.sh")
+	user_data_replace_on_change = true
 	metadata_options {
 		http_tokens                 = "required"
 		http_put_response_hop_limit = 2
