@@ -2,4 +2,5 @@
 apache-airflow-providers-snowflake
 snowflake-connector-python[pandas]
 astronomer-cosmos
+apache-airflow-providers-amazon
 
