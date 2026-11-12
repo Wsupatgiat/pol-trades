@@ -1,0 +1,268 @@
+version: 2
+
+models:
+  - name: dim_filers
+    description: >
+      One row per filer: members of the House and Senate, and senior executive
+      branch officials who file OGE Form 278-T. Descriptive attributes only.
+      Built as a view in staging.
+    config:
+      meta:
+        sources:
+          - https://github.com/kadoa-org/congress-trading-monitor/blob/main/README.md
+    columns:
+      - name: filer_id
+        description: >
+          Source filer id (raw `id`), prefixed by source: house_, senate_ or oge_
+          followed by the name (e.g. house_josh_gottheimer). Unique per filer.
+      - name: full_name
+        description: Filer name as listed by the source, lowercased.
+      - name: branch
+        description: congress (House and Senate members) or executive (officials filing with OGE).
+        config:
+          meta:
+            sources:
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/README.md
+      - name: chamber
+        description: house or senate. Null for the executive branch.
+      - name: party
+        description: Party code as provided by the source (D, R, ...). Null for the executive branch.
+      - name: state
+        description: Two-letter state or territory code the member represents. Null for the executive branch.
+      - name: agency
+        description: >
+          Executive agency the official serves in (e.g. social security
+          administration, white house office), lowercased. Null for congress.
+        config:
+          meta:
+            sources:
+              - "Data check: kadoa-org/congress-trading-monitor public/data/filers.json, commit 617ed0e (2026-11-13)"
+      - name: level
+        description: >
+          Executive Schedule pay level of the official's position: 1 (Level I,
+          e.g. cabinet secretaries) or 2 (Level II, e.g. deputy secretaries).
+          Null for congress and for executive positions without a level (e.g. the
+          President, whose pay is set by 3 U.S.C. 102).
+        config:
+          meta:
+            sources:
+              - https://www.law.cornell.edu/uscode/text/5/5312
+              - https://www.law.cornell.edu/uscode/text/5/5313
+              - https://www.law.cornell.edu/uscode/text/3/102
+      - name: office
+        description: >
+          Office as provided by the source, not cleaned. Congress: title and
+          district (House) or state (Senate), joined by a middle dot (e.g.
+          'U.S. Representative · CA-17', 'U.S. Senator · OK'). Executive: position
+          title, sometimes with a trailing number (e.g. 'Governor 2').
+        config:
+          meta:
+            sources:
+              - "Data check: kadoa-org/congress-trading-monitor public/data/filers.json, commit 617ed0e (2026-11-13)"
+      - name: office_title
+        description: >
+          office cleaned with clean_text (whitespace collapsed, trimmed,
+          lowercased), then for congress the text before the middle dot
+          (chr(183)), and for executive the trailing number stripped
+          (e.g. 'u.s. representative', 'governor').
+      - name: photo_url
+
+  - name: fct_trades
+    description: >
+      One row per disclosed transaction (house PTR, senate PTR, OGE 278-T).
+      Cast and lightly cleaned from raw trades. Rows are not deduplicated
+      (no amendment field exists in the source).
+    config:
+      meta:
+        sources:
+          - https://github.com/kadoa-org/congress-trading-monitor/blob/main/README.md
+    columns:
+      - name: trade_id
+        description: >
+          Source trade id: filing_id plus a suffix _<letter><1-4 digits>
+          (e.g. house_20000022_t0). The meaning of the letter (t or g) is not
+          documented by the source.
+      - name: filer_id
+        description: Filer who submitted the filing. Joins to dim_filers.filer_id.
+      - name: filing_id
+        description: >
+          Filing (disclosure document) the trade was reported in. Determines
+          filer_id, filing_date, filing_type and doc_url.
+      - name: source_id
+        description: >
+          Source system: house_clerk (House Clerk financial disclosure portal),
+          senate_efd (Senate eFD) or oge_executive (Office of Government Ethics).
+        config:
+          meta:
+            sources:
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/pages/AboutPage.jsx
+      - name: filing_type
+        description: >
+          PTR (Periodic Transaction Report, house and senate) or 278-T (OGE Form
+          278-T, executive branch). Both are periodic transaction reports under
+          the Ethics in Government Act, as amended by the STOCK Act.
+        config:
+          meta:
+            sources:
+              - https://ethics.house.gov/wp-content/uploads/2026/02/Final-CY-2025-PTR-Form-1.pdf
+              - https://www.oge.gov/web/278eGuide.nsf/Form_278-T
+      - name: doc_url
+        description: Link to the original filing (house PDF, senate eFD page or OGE document).
+      - name: transaction_date
+        description: Date the transaction took place, as reported on the filing.
+        config:
+          meta:
+            sources:
+              - https://ethics.house.gov/wp-content/uploads/2026/02/Final-CY-2025-PTR-Form-1.pdf
+      - name: notification_date
+        description: >
+          House PTR "Date Notified of Transaction": the date the filer learned of
+          the trade. Starts the 30-day reporting clock. Per the House guide it
+          equals transaction_date in most cases when the filer made the trade, but
+          in the data the two usually differ. Out-of-range values (e.g. 1936, 2203)
+          are kept as filed.
+        config:
+          meta:
+            sources:
+              - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+      - name: filing_date
+        description: >
+          Date the filing was submitted. Weekend dates are valid electronic
+          filings.
+        config:
+          meta:
+            sources:
+              - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+      - name: ingested_at
+      - name: owner
+        description: >
+          spouse, joint, dependent child, dependent joint or self. House codes
+          SP/JT/DC are optional on the form, so null means not stated (not
+          necessarily self). DJ (dependent joint) is mapped but has no rows in
+          current data. Senate uses words (Self, Spouse, Joint, Child). Always null
+          for OGE. Any other code is passed through lowercased.
+        config:
+          meta:
+            sources:
+              - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/TradesTable.jsx
+      - name: ticker
+        description: >
+          Ticker matched to the asset by the source (not always on the filing
+          itself). US-TBILL is a placeholder for treasury bills.
+        config:
+          meta:
+            sources:
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/pages/AboutPage.jsx
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/README.md
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/pages/OverviewPage.jsx
+              - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+      - name: ticker_root
+        description: Leading letters/digits of ticker (BRK.B -> BRK). Null for US-TBILL.
+      - name: share_class
+      - name: preferred_series
+      - name: exchange_suffix
+      - name: is_treasury_placeholder
+        description: True when ticker is US-TBILL.
+      - name: asset_name
+      - name: asset_type
+        description: >
+          Lowercased as filed. House uses codes (st = stocks, gs = government
+          securities, cs = corporate securities, op = options, ot = other, et =
+          exchange traded notes, ...). Senate uses words (stock, municipal
+          security, ...).
+        config:
+          meta:
+            sources:
+              - https://fd.house.gov/reference/asset-type-codes.aspx
+              - "Data check: kadoa-org/congress-trading-monitor public/data/filer, commit 617ed0e (2026-11-13)"
+              - https://www.ethics.senate.gov/public/_cache/files/df29d914-0b9c-4431-b09e-bdea62dc7e56/2020-periodic-transaction-report-instructions.pdf
+      - name: transaction_type
+        description: >
+          purchase, sale (full), sale (partial) or exchange. Exchange (House
+          definition) is an exchange of stock certificates following an
+          acquisition, merger or spin-off.
+        config:
+          meta:
+            sources:
+              - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+      - name: amount_range_low
+        description: >
+          Low end of the disclosed amount range, rounded down to 2 significant
+          digits (1,001 -> 1,000; 5,000,001 -> 5,000,000), so adjacent ranges share
+          a boundary. Parsed from amount_range_label when the raw value is null.
+          Bucket exact values with > low and <= high. For open-ended "Over $X"
+          labels, set to X.
+      - name: amount_range_high
+        description: >
+          High end of the disclosed amount range. Parsed from amount_range_label
+          when the raw value is null. Null for open-ended "Over $X" labels.
+      - name: amount_range_label
+        description: >
+          Official value category as filed. Filers report the gross transaction
+          amount as a range, not an exact value (e.g. '$1,001 - $15,000'). A few
+          OGE labels drop the '-' or contain typos (e.g. '$5,001,001'). House also
+          uses 'Spouse/DC Over $1,000,000': a transaction over $1,000,000 in an
+          asset held only by the spouse or dependent child.
+        config:
+          meta:
+            sources:
+              - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+              - "Data check: kadoa-org/congress-trading-monitor public/data/filer, commit 617ed0e (2026-11-13)"
+      - name: comment
+        description: >
+          Filer comment, cleaned with clean_text (newlines, tabs and repeated
+          whitespace collapsed to one space, trimmed, lowercased).
+      - name: days_to_file
+        description: >
+          Days from transaction_date to filing_date, as provided by the source.
+          Negative values are nulled. Some rows (mostly OGE) differ from the date
+          difference or are null even though both dates exist.
+        config:
+          meta:
+            sources:
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/TradesTable.jsx
+              - "Data check: kadoa-org/congress-trading-monitor public/data/filer, commit 617ed0e (2026-11-13)"
+      - name: is_late
+        description: >
+          Source flag, true when filed more than 45 days after the trade
+          (days_to_file > 45). Applies only the 45-day rule; the official deadline
+          is the earlier of 30 days from notification or 45 days from the trade.
+          False also when days_to_file is null. Late does not mean a rule was
+          broken (OGE extensions are not visible).
+        config:
+          meta:
+            sources:
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/methodology.js
+              - https://ethics.house.gov/wp-content/uploads/2023/01/FINAL-PTR-Due-Date-Pink-Sheet.pdf
+      - name: notification_received_over_30d
+        description: >
+          OGE 278-T column "Notification Received Over 30 Days Ago": true when the
+          filer was notified of the transaction more than 30 days before
+          reporting it (normally only with an extension). Null for house and
+          senate, and for some OGE rows.
+        config:
+          meta:
+            sources:
+              - https://www.oge.gov/web/278eGuide.nsf/Form_278-T
+      - name: ret_since
+        description: >
+          Return (%) from the closing price on transaction_date to the latest
+          close at snapshot time, not annualized. Extreme values are real (e.g.
+          NVDA 2016). Null for tickers with a dot. For options, the underlying
+          stock's return.
+        config:
+          meta:
+            sources:
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/methodology.js
+              - "Data check (options match same-ticker, same-date stock rows, 225 of 225): kadoa-org/congress-trading-monitor, commit 617ed0e (2026-11-13)"
+      - name: excess_since
+        description: >
+          ret_since minus the S&P 500 (SPY) return over the same days, in
+          percentage points, not annualized.
+        config:
+          meta:
+            sources:
+              - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/methodology.js
+      - name: ret_30d
+      - name: ret_1y

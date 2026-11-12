@@ -2,7 +2,132 @@ version: 2
 
 sources:
   - name: pol_trades
+    description: >
+      Snapshot of kadoa-org/congress-trading-monitor (public/data/filer/*.json),
+      loaded by the upload_pol_trades DAG. All columns varchar, loaded as-is;
+      nulls arrive as SQL null.
     database: raw
     schema: testing
+    config:
+      meta:
+        sources:
+          - https://github.com/kadoa-org/congress-trading-monitor
     tables:
       - name: filers
+        description: One row per filer (the `filer` object of each filer file).
+        columns:
+          - name: id
+            description: Filer id, prefixed house_, senate_ or oge_. Unique, never null.
+          - name: full_name
+            description: Filer name as listed by the source.
+          - name: branch
+            description: congress or executive.
+          - name: chamber
+            description: house or senate. Null for executive.
+          - name: party
+            description: Party code (D, R, ...). Null for executive.
+          - name: state
+            description: Two-letter state or territory code. Null for executive.
+          - name: agency
+            description: Executive agency. Populated for executive only.
+          - name: level
+            description: Executive Schedule level ('Level I' or 'Level II'). Null for congress and some executive positions.
+            config:
+              meta:
+                sources:
+                  - https://www.law.cornell.edu/uscode/text/5/5312
+                  - https://www.law.cornell.edu/uscode/text/5/5313
+          - name: office
+            description: >
+              Office title. Congress: title and district (House) or state (Senate)
+              joined by a middle dot (e.g. 'U.S. Representative · CA-17',
+              'U.S. Senator · OK'). Executive: position title, sometimes with a
+              trailing number (e.g. 'Governor 2').
+            config:
+              meta:
+                sources:
+                  - "Data check: kadoa-org/congress-trading-monitor public/data/filer, commit 617ed0e (2026-11-13)"
+          - name: photo_url
+      - name: trades
+        description: One row per disclosed transaction (the `trades` list of each filer file).
+        columns:
+          - name: id
+            description: Trade id, filing_id plus _<letter><1-4 digits>. Unique, never null.
+          - name: filer_id
+            description: Filer id. Joins to filers.id.
+          - name: filing_id
+            description: Filing (disclosure document) id.
+          - name: source_id
+          - name: filing_type
+          - name: transaction_date
+            description: Date of the transaction (YYYY-MM-DD).
+          - name: notification_date
+            description: Date the filer was notified of the transaction (YYYY-MM-DD).
+            config:
+              meta:
+                sources:
+                  - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+          - name: filing_date
+            description: Date the filing was submitted (YYYY-MM-DD).
+          - name: owner
+            description: >
+              House codes SP, JT, DC or DJ (dependent joint), optional on
+              the form, or senate words Self, Spouse, Joint, Child. Null
+              for OGE. A few rows hold 'SA', an asset-type code.
+            config:
+              meta:
+                sources:
+                  - https://ethics.house.gov/wp-content/uploads/2026/07/7-8-2026-2025-Published-Instruction-Guide.pdf
+                  - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/TradesTable.jsx
+          - name: ticker
+            description: Ticker matched by the source. US-TBILL for treasury bills.
+          - name: asset_name
+            description: Asset description as parsed from the filing. May contain pdf-parse garbage.
+          - name: asset_type
+            description: >
+              House code (ST, GS, OP, ...) or senate word (Stock, ...). Null for OGE,
+              and for many house (~45%) and some senate rows.
+            config:
+              meta:
+                sources:
+                  - https://fd.house.gov/reference/asset-type-codes.aspx
+                  - "Data check: kadoa-org/congress-trading-monitor public/data/filer, commit 617ed0e (2026-11-13)"
+          - name: transaction_type
+            description: Purchase, Sale (Full), Sale (Partial) or Exchange.
+          - name: amount_range_low
+            description: Low bound of the value category (e.g. 1001). Null for some rows (mostly OGE).
+          - name: amount_range_high
+            description: High bound of the value category (e.g. 15000). 100000000 when populated for 'Over $50,000,000'.
+          - name: amount_range_label
+            description: Value category as filed (e.g. '$1,001 - $15,000').
+          - name: comment
+            description: Filer comment as filed.
+          - name: is_late
+            description: 0/1, 1 when days_to_file > 45.
+            config:
+              meta:
+                sources:
+                  - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/methodology.js
+          - name: days_to_file
+            description: >
+              Days from transaction_date to filing_date. Can be implausibly negative.
+          - name: ingested_at
+            description: Source ingestion timestamp (YYYY-MM-DD HH:MM:SS).
+          - name: notification_received_over_30d
+          - name: doc_url
+            description: Link to the original filing.
+          - name: ret_since
+            description: Return (%) from the trade-date close to the latest close.
+            config:
+              meta:
+                sources:
+                  - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/methodology.js
+          - name: excess_since
+            description: ret_since minus SPY's return over the same days (percentage points).
+            config:
+              meta:
+                sources:
+                  - https://github.com/kadoa-org/congress-trading-monitor/blob/main/src/methodology.js
+          - name: ret_30d
+          - name: ret_1y
+          - name: row_index
