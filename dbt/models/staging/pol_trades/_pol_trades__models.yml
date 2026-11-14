@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: dim_filers
+  - name: stg_filers
     description: >
       One row per filer: members of the House and Senate, and senior executive
       branch officials who file OGE Form 278-T. Descriptive attributes only.
@@ -67,7 +67,7 @@ models:
           (e.g. 'u.s. representative', 'governor').
       - name: photo_url
 
-  - name: fct_trades
+  - name: stg_trades
     description: >
       One row per disclosed transaction (house PTR, senate PTR, OGE 278-T).
       Cast and lightly cleaned from raw trades. Rows are not deduplicated
@@ -83,7 +83,7 @@ models:
           (e.g. house_20000022_t0). The meaning of the letter (t or g) is not
           documented by the source.
       - name: filer_id
-        description: Filer who submitted the filing. Joins to dim_filers.filer_id.
+        description: Filer who submitted the filing. Joins to stg_filers.filer_id.
       - name: filing_id
         description: >
           Filing (disclosure document) the trade was reported in. Determines
