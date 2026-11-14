@@ -7,7 +7,7 @@ sources:
       loaded by the upload_pol_trades DAG. All columns varchar, loaded as-is;
       nulls arrive as SQL null.
     database: raw
-    schema: testing
+    schema: "{{ target.schema }}"
     config:
       meta:
         sources:
