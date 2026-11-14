@@ -53,6 +53,8 @@ crash.log
 .vscode/
 .idea/
 Thumbs.db
+*.swp
+*.swo
 
 # Claude Code
 CLAUDE.md

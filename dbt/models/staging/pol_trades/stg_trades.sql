@@ -53,8 +53,6 @@ select
 	notification_date,
 	filing_date,
 	ingested_at,
-	-- house codes per the PTR form (SP/DC/JT, optional so null = not stated), senate uses words, oge is always null
-	-- 'SA' is a house asset-type code (stock appreciation right), not an owner code
 	case owner
 		when 'SP' then 'spouse'
 		when 'Spouse' then 'spouse'
@@ -62,7 +60,6 @@ select
 		when 'Joint' then 'joint'
 		when 'DC' then 'dependent child'
 		when 'Child' then 'dependent child'
-		-- dependent joint, listed in kadoa's TradesTable.jsx; no rows in current data
 		when 'DJ' then 'dependent joint'
 		when 'Self' then 'self'
 		when 'SA' then null

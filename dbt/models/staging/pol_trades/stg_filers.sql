@@ -14,7 +14,7 @@ select
 		when 'Level I' then 1
 		when 'Level II' then 2
 	end::integer as level,
-	office,
+	{{ clean_text('office') }} as office,
 	-- office is cleaned first (clean_text: whitespace collapsed, trimmed, lowercased)
 	-- congress: 'U.S. Representative · NJ-07' -> 'u.s. representative' (separator is chr(183))
 	-- executive: strip numeric suffixes like 'Governor 2' -> 'governor'

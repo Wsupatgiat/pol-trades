@@ -51,10 +51,12 @@ models:
               - https://www.law.cornell.edu/uscode/text/3/102
       - name: office
         description: >
-          Office as provided by the source, not cleaned. Congress: title and
-          district (House) or state (Senate), joined by a middle dot (e.g.
-          'U.S. Representative · CA-17', 'U.S. Senator · OK'). Executive: position
-          title, sometimes with a trailing number (e.g. 'Governor 2').
+          Office cleaned with clean_text (whitespace collapsed,
+          trimmed, lowercased). Congress: title and district
+          (House) or state (Senate), joined by a middle dot
+          (e.g. 'u.s. representative · ca-17',
+          'u.s. senator · ok'). Executive: position title,
+          sometimes with a trailing number (e.g. 'governor 2').
         config:
           meta:
             sources:
