@@ -15,9 +15,10 @@ select
 		when 'Level II' then 2
 	end::integer as level,
 	{{ clean_text('office') }} as office,
-	-- office is cleaned first (clean_text: whitespace collapsed, trimmed, lowercased)
-	-- congress: 'U.S. Representative · NJ-07' -> 'u.s. representative' (separator is chr(183))
-	-- executive: strip numeric suffixes like 'Governor 2' -> 'governor'
+	-- 'U.S. Representative · VA-07' --> 'u.s. representative'
+	-- congress: after clean_text, keep the text before the middle dot (chr(183)); split_part, no regex
+	-- 'Governor 3' --> 'governor'
+	-- executive: after clean_text, regex strips a trailing space and number
 	case
 		when branch = 'congress' then trim(split_part({{ clean_text('office') }}, chr(183), 1))
 		else regexp_replace({{ clean_text('office') }}, ' [0-9]+$', '')

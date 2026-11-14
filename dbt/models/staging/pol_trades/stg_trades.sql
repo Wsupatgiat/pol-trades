@@ -19,13 +19,17 @@ typed as (
 		asset_name,
 		asset_type,
 		transaction_type,
-		-- raw bound first; when null, parse from the label ('Over $x', or '$a - $b' with the '-' optional
-		-- because some oge labels drop it, e.g. '$50,001 $100,000')
+		-- 'Spouse/DC Over $1,000,000' --> 1000000
+		-- raw bound first; if null, regex takes the number after 'over $' (case-insensitive)
+		-- '$50,001 $100,000' --> 50001
+		-- else regex takes the first number of '$a - $b' (the '-' is optional)
 		coalesce(
 			try_to_number(amount_range_low),
 			try_to_number(replace(regexp_substr(amount_range_label, 'over \\$([0-9,]+)', 1, 1, 'ie', 1), ',', '')),
 			try_to_number(replace(regexp_substr(amount_range_label, '^\\$([0-9,]+) *-? *\\$([0-9,]+)$', 1, 1, 'e', 1), ',', ''))
 		) as amount_range_low,
+		-- '$50,001 $100,000' --> 100000
+		-- raw bound first; if null, the same '$a - $b' regex takes the second number
 		coalesce(
 			try_to_number(amount_range_high),
 			try_to_number(replace(regexp_substr(amount_range_label, '^\\$([0-9,]+) *-? *\\$([0-9,]+)$', 1, 1, 'e', 2), ',', ''))
@@ -67,16 +71,24 @@ select
 	end as owner,
 	-- Ticker Derived Columns
 	ticker,
+	-- 'BRK.B' --> 'BRK'
+	-- regex keeps the leading run of letters and digits ('US-TBILL' becomes null)
 	case
 		when ticker = 'US-TBILL' then null
 		else regexp_substr(ticker, '^[A-Z0-9]+')
 	end as ticker_root,
+	-- 'BRK.B' --> 'B'
+	-- regex matches one letter after a dot or dash, which is the share class
 	case
 		when regexp_like(ticker, '^[A-Z0-9]+[.-][A-Z]$') then right(ticker, 1)
 	end as share_class,
+	-- 'SRE-PA' --> 'A'
+	-- regex matches '-P' plus one letter, and the letter is the preferred series
 	case
 		when regexp_like(ticker, '^[A-Z0-9]+-P[A-Z]$') then right(ticker, 1)
 	end as preferred_series,
+	-- 'BAC.PL' --> 'PL'
+	-- regex matches two letters after a dot, which are the exchange suffix
 	case
 		when regexp_like(ticker, '^[A-Z0-9]+\\.[A-Z]{2}$') then split_part(ticker, '.', 2)
 	end as exchange_suffix,
