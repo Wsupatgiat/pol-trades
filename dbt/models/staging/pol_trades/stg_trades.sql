@@ -10,9 +10,13 @@ typed as (
 		source_id,
 		filing_type,
 		doc_url,
+		-- format: YYYY-MM-DD
 		try_to_date(transaction_date) as transaction_date,
+		-- format: YYYY-MM-DD
 		try_to_date(notification_date) as notification_date,
+		-- format: YYYY-MM-DD
 		try_to_date(filing_date) as filing_date,
+		-- format: YYYY-MM-DD HH:MI:SS
 		try_to_timestamp_ntz(ingested_at) as ingested_at,
 		owner,
 		ticker,

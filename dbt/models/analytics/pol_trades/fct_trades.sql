@@ -5,9 +5,13 @@ select
 	source_id,
 	filing_type,
 	doc_url,
+	-- format: YYYY-MM-DD
 	transaction_date,
+	-- format: YYYY-MM-DD
 	notification_date,
+	-- format: YYYY-MM-DD
 	filing_date,
+	-- format: YYYY-MM-DD HH:MI:SS
 	ingested_at,
 	owner,
 	ticker,
