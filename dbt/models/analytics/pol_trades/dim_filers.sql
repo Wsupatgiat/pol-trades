@@ -2,13 +2,13 @@
 	config(
 		materialized='incremental',
 		unique_key='filer_id',
-		incremental_strategy='merge'
+		incremental_strategy='merge',
+		merge_exclude_columns=['loaded_at']
 	)
 }}
 
--- incremental: merge every stg_filers row on filer_id (update existing, insert new)
--- filers missing from the source are kept as-is (merge never deletes)
-select
+with stg as (
+	select
 	filer_id,
 	full_name,
 	branch,
@@ -20,5 +20,31 @@ select
 	office,
 	office_title,
 	photo_url,
-	current_timestamp() as last_updated_at
-from {{ ref('stg_filers') }}
+	{{
+		dbt_utils.generate_surrogate_key([
+			'full_name',
+			'branch',
+			'chamber',
+			'party',
+			'state',
+			'agency',
+			'level',
+			'office',
+			'office_title',
+			'photo_url'
+		])
+	}} as row_hash
+	from {{ ref('stg_filers') }}
+)
+select
+	stg.*,
+	current_timestamp() as updated_at,
+	current_timestamp() as loaded_at
+from stg
+{% if is_incremental() %}
+left join {{this}} this
+	on stg.filer_id = this.filer_id
+where 
+	this.filer_id is null
+	or stg.row_hash <> this.row_hash
+{% endif %}
