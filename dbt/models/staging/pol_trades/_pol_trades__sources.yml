@@ -112,7 +112,18 @@ sources:
             description: >
               Days from transaction_date to filing_date. Can be implausibly negative.
           - name: ingested_at
-            description: Source ingestion timestamp (YYYY-MM-DD HH:MM:SS).
+            description: >
+              Source pipeline timestamp (no time zone, consistent with UTC) of the last
+              time the source ingested (scraped and parsed) the trade. For a new trade
+              it is set shortly before the trade is first published (median 0.5 hours
+              before the commit). Overwritten when the source re-ingests or reparses
+              the filing, usually with no other value changing; not updated by the
+              source's later data fixes. Not documented by the source.
+              Format: YYYY-MM-DD HH:MM:SS.
+            config:
+              meta:
+                sources:
+                  - "Data check: kadoa-org/congress-trading-monitor commit history 2026-04-22 to 2026-11-24 (data_profiling/source_diff/column_changes.py, ingested_at_timing.py)"
           - name: notification_received_over_30d
           - name: doc_url
             description: Link to the original filing.

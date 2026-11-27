@@ -17,7 +17,7 @@ clean-targets:
 models:
   pol_trades_dbt:
     +static_analysis: strict
-    # Materialize staging models as views, and analytics models as tables
+    # Materialize staging models as views, and analytics models as tables by default (dim_filers and fct_trades override this to incremental)
     # database = layer; schema comes from the target (testing or pol_trades)
     staging:
       +materialized: view
