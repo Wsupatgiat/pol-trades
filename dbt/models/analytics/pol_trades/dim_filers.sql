@@ -42,9 +42,5 @@ select
 	current_timestamp() as loaded_at
 from stg
 {% if is_incremental() %}
-left join {{this}} this
-	on stg.filer_id = this.filer_id
-where 
-	this.filer_id is null
-	or stg.row_hash <> this.row_hash
+{{ select_new('stg', ['filer_id']) }}
 {% endif %}

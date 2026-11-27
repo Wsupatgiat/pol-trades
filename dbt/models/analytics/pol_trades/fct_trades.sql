@@ -78,11 +78,7 @@ select
 	current_timestamp() as updated_at
 from stg
 {% if is_incremental() %}
-left join {{this}} this
-	on stg.trade_id = this.trade_id
-where 
-	this.trade_id is null
-	or stg.row_hash <> this.row_hash
+{{ select_new('stg', ['trade_id']) }}
 {% endif %}
 
 
